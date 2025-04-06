@@ -26,11 +26,23 @@ ChartJS.register(
   Legend
 );
 
+interface CoinMarketData {
+  current_price: { usd: number };
+  market_cap: { usd: number };
+}
+
+interface CoinData {
+  name: string;
+  symbol: string;
+  market_data: CoinMarketData;
+  last_updated: string;
+}
+
 const CryptoDetailPage = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
-  const [coinData, setCoinData] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [coinData, setCoinData] = useState<CoinData | null>(null);
+  const [history, setHistory] = useState<[number, number][]>([]);
 
   useEffect(() => {
     const fetchCryptoData = async () => {
@@ -48,8 +60,8 @@ const CryptoDetailPage = () => {
 
         setCoinData(coinRes.data);
         setHistory(marketChartRes.data.prices);
-      } catch (err) {
-        console.error('Error fetching coin data:', err);
+      } catch {
+        console.error('Error fetching coin data');
       } finally {
         setLoading(false);
       }
@@ -68,7 +80,7 @@ const CryptoDetailPage = () => {
   }
 
   const labels = history.map(([timestamp]) => new Date(timestamp).toLocaleDateString());
-  const prices = history.map(([_, price]) => price);
+  const prices = history.map(([, price]) => price);
 
   const chartData = {
     labels,
@@ -85,13 +97,13 @@ const CryptoDetailPage = () => {
 
   return (
     <div className="p-4 space-y-6">
-      <h2 className="text-2xl font-bold">{coinData.name} - 7 Day History</h2>
+      <h2 className="text-2xl font-bold">{coinData?.name} - 7 Day History</h2>
 
       <div className="text-sm text-gray-600 space-y-1">
-        <p><strong>Symbol:</strong> {coinData.symbol.toUpperCase()}</p>
-        <p><strong>Current Price:</strong> ${coinData.market_data.current_price.usd.toLocaleString()}</p>
-        <p><strong>Market Cap:</strong> ${coinData.market_data.market_cap.usd.toLocaleString()}</p>
-        <p><strong>Last Updated:</strong> {new Date(coinData.last_updated).toLocaleString()}</p>
+        <p><strong>Symbol:</strong> {coinData?.symbol.toUpperCase()}</p>
+        <p><strong>Current Price:</strong> ${coinData?.market_data.current_price.usd.toLocaleString()}</p>
+        <p><strong>Market Cap:</strong> ${coinData?.market_data.market_cap.usd.toLocaleString()}</p>
+        <p><strong>Last Updated:</strong> {new Date(coinData?.last_updated).toLocaleString()}</p>
       </div>
 
       <div className="max-w-3xl">

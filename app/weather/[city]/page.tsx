@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
@@ -25,34 +25,44 @@ ChartJS.register(
   Legend
 );
 
+interface WeatherEntry {
+  dt: number;
+  temp: number;
+  humidity: number;
+}
+
+interface WeatherData {
+  history: WeatherEntry[];
+}
+
 const WeatherCityPage = () => {
-  const { city } = useParams();
-  const [weatherData, setWeatherData] = useState<any>(null);
+  const { city } = useParams<{ city: string }>();
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchCityWeather = async () => {
+  const fetchCityWeather = useCallback(async () => {
     try {
       const response = await axios.get(`/api/weather?city=${city}`);
       setWeatherData(response.data);
-    } catch (err) {
-      console.error('Error fetching city weather:', err);
+    } catch {
+      console.error('Error fetching city weather');
     } finally {
       setLoading(false);
     }
-  };
+  }, [city]);
 
   useEffect(() => {
     fetchCityWeather();
-  }, [city]);
+  }, [fetchCityWeather]);
 
   if (loading) return <div className="text-center mt-10">Loading...</div>;
 
-  if (!weatherData || !weatherData.history) {
+  if (!weatherData?.history) {
     return <div className="text-center mt-10 text-red-500">No weather data available for this city.</div>;
   }
 
-  const tempHistory = weatherData.history.map((entry: any) => entry.temp);
-  const timeLabels = weatherData.history.map((entry: any) =>
+  const tempHistory = weatherData.history.map(entry => entry.temp);
+  const timeLabels = weatherData.history.map(entry =>
     new Date(entry.dt * 1000).toLocaleTimeString()
   );
 
@@ -87,7 +97,7 @@ const WeatherCityPage = () => {
             </tr>
           </thead>
           <tbody>
-            {weatherData.history.map((entry: any, i: number) => (
+            {weatherData.history.map((entry, i) => (
               <tr key={i} className="border-t">
                 <td className="px-4 py-2">{new Date(entry.dt * 1000).toLocaleTimeString()}</td>
                 <td className="px-4 py-2">{entry.temp}</td>
